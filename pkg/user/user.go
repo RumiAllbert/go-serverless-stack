@@ -13,6 +13,14 @@ import (
 
 var(
 	ErrorFailedToFetchRecord = "failed to fetch record"
+	ErrorInvalidUserData = "invalid user data"
+	ErrorFailedToUnmarshalRecord = "failed to unmarshal record"
+	ErrroInvalidEmail = "invalid email"
+	ErrorCouldNotMarshalItem = "could not marshal item"
+	ErrorCouldNotDeleteItem = "could not delete item"
+	ErrorCouldNotDynamoPutItem = "could not dynamo put item"
+	ErrorUserAlreadyExists = "user.User already exists"
+	ErrorUserDoesNotExist = "user.User does not exist"
 )
 
 type User struct {
