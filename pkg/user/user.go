@@ -1,42 +1,43 @@
 package user
 
 import (
-	"github.com/rumiallbert/go-serverless-stack/pkg/user"
 	"encoding/json"
 	"errors"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/rumiallbert/go-serverless-stack/pkg/validators"
 )
 
-var(
-	ErrorFailedToFetchRecord = "failed to fetch record"
-	ErrorInvalidUserData = "invalid user data"
+var (
+	ErrorFailedToFetchRecord     = "failed to fetch record"
+	ErrorInvalidUserData         = "invalid user data"
 	ErrorFailedToUnmarshalRecord = "failed to unmarshal record"
-	ErrroInvalidEmail = "invalid email"
-	ErrorCouldNotMarshalItem = "could not marshal item"
-	ErrorCouldNotDeleteItem = "could not delete item"
-	ErrorCouldNotDynamoPutItem = "could not dynamo put item"
-	ErrorUserAlreadyExists = "user.User already exists"
-	ErrorUserDoesNotExist = "user.User does not exist"
+	ErrorInvalidEmail            = "invalid email"
+	ErrorCouldNotMarshalItem     = "could not marshal item"
+	ErrorCouldNotDeleteItem      = "could not delete item"
+	ErrorCouldNotDynamoPutItem   = "could not dynamo put item"
+	ErrorUserAlreadyExists       = "user.User already exists"
+	ErrorUserDoesNotExist        = "user.User does not exist"
 )
 
 type User struct {
-	Email		string `json:"email"`
-	FirstName	string `json:"firstName"`
-	LastName	string `json:"lastName"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
 
-func FetchUser(email, tableName string, dynaClient dynomodbiface.DynamoDBAPI)(*User, error) {
+func FetchUser(email, tableName string, dynaClient dynamodbiface.DynamoDBAPI) (*User, error) {
 	input := &dynamodb.GetItemInput{
-		Key: map[string]*dynomodb.AttributeValue{
+		Key: map[string]*dynamodb.AttributeValue{
 			"email": {
-				S: aws.String(email)
-			}
+				S: aws.String(email),
+			},
 		},
-		TableName: aws.String(tableName)
+		TableName: aws.String(tableName),
 	}
 
 	result, err := dynaClient.GetItem(input)
@@ -44,81 +45,81 @@ func FetchUser(email, tableName string, dynaClient dynomodbiface.DynamoDBAPI)(*U
 		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
 
-	item := new(user)
-	err = dynomodbattribute.UnmarshalMap(result.Item, item)
+	item := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Item, item)
 	if err != nil {
 		return nil, errors.New(ErrorFailedToUnmarshalRecord)
 	}
 	return item, nil
 }
 
-func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]Users) {
+func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI) (*[]User, error) {
 	input := &dynamodb.ScanInput{
-		TableName: aws.String(tableName)
+		TableName: aws.String(tableName),
 	}
-	results, err:= dynaClient.Scan(input)
+	results, err := dynaClient.Scan(input)
 	if err != nil {
 		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
 	item := new([]User)
-	err = dynomodbattribute.UnmarshalMap(result.Items, item)
+	err = dynamodbattribute.UnmarshalListOfMaps(results.Items, item)
 	return item, nil
 }
 
-func Createuser(req events.APIGatewayProxyRequest, tablName string, dynaClient dynomodbiface.DynamoDBAPI) (*events.APIGatewayProxyResponse, error)
-(*User, error){
+func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI) (*User, error) {
 	var u User
 
-	if err :=json.Unmarshal([]byte(req.Body), &u): if err != nil {
+	err := json.Unmarshal([]byte(req.Body), &u)
+	if err != nil {
 		return nil, errors.New(ErrorInvalidUserData)
 	}
 	// First check whether the email is valid
-	if !validtors.IsEmailValid(u.Email) {
+	if !validators.IsEmailValid(u.Email) {
 		return nil, errors.New(ErrorInvalidEmail)
 	}
 	// Check whether the user already exists
 	currentUser, _ := FetchUser(u.Email, tableName, dynaClient)
-	if currenUser != nil && len(CurrentUser.email) != 0 {
+	if currentUser != nil && len(currentUser.Email) != 0 {
 		return nil, errors.New(ErrorUserAlreadyExists)
 	}
 	// If user doesn't exist and email is valid, save the user
-	av, erro :=	dynamodbattribute.marshalMap(u)
+	av, err := dynamodbattribute.MarshalMap(u)
 	if err != nil {
-		return nil, errors.new(ErrorCouldNotMarshalItem)
+		return nil, errors.New(ErrorCouldNotMarshalItem)
 	}
 
-	input: &dynamodb.PutItemInput{
-		Item: av,
-		TableName: aws.String(tableName)
-	}
+	input :=
+		&dynamodb.PutItemInput{
+			Item:      av,
+			TableName: aws.String(tableName),
+		}
 
-	_, err =dynaClient.PutItem(input)
+	_, err = dynaClient.PutItem(input)
 	if err != nil {
 		return nil, errors.New(ErrorCouldNotDynamoPutItem)
 	}
 	return &u, nil
 }
 
-func UpdateUser(req events.APIGatewayProxyRequest, tablName string, dynaClient dynomodbiface.DynamoDBAPI) 
-(*User, error){
+func UpdateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI) (*User, error) {
 	var u User
 	if err := json.Unmarshal([]byte(req.Body), &u); err != nil {
 		return nil, errors.New(ErrorInvalidEmail)
 	}
 	// Check if user exists
 	currentUser, _ := FetchUser(u.Email, tableName, dynaClient)
-	if currentUser != nil && len(currentUser.email) == 0 {
+	if currentUser != nil && len(currentUser.Email) == 0 {
 		return nil, errors.New(ErrorUserDoesNotExist)
 	}
 	// If it does then we can update the data for the user
 	av, err := dynamodbattribute.MarshalMap(u)
 	if err != nil {
-		return nill, errors.New(ErrorCouldNotMarshalItem)
+		return nil, errors.New(ErrorCouldNotMarshalItem)
 	}
 
 	input := &dynamodb.PutItemInput{
-		Item: av,
-		TableName: aws.String(tableName)
+		Item:      av,
+		TableName: aws.String(tableName),
 	}
 
 	_, err = dynaClient.PutItem(input)
