@@ -1,12 +1,13 @@
 package user
 
 import (
-	"enconding/json"
+	"github.com/rumiallbert/go-serverless-stack/pkg/user"
+	"encoding/json"
 	"errors"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/dynamodb"
-	"github.com/aws/aws-sdk-go/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
