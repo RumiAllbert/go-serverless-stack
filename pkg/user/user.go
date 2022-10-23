@@ -30,7 +30,6 @@ type User struct {
 }
 
 func FetchUser(email, tableName string, dynaClient dynomodbiface.DynamoDBAPI)(*User, error) {
-	
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynomodb.AttributeValue{
 			"email": {
